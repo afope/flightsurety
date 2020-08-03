@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>FlightSurety</title>
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <link href="https://fonts.googleapis.com/css?family=Overpass:300,300i,700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header>
+        <div class="wrapper">
+            <h1>Ire's FlightSurety</h1>
+        </div>
+    </header>
+
+    <main class="wrapper">
+        <section id="display-wrapper">
+        </section>
+
+        <section>
+            <h2>Purchase Insurance</h2>
+
+            <p class="description">Select a flight below to purchase up to 1 ether of insurance</p>
+
+            <select name="purchase-insurance" id="purchase-insurance-flights" aria-label="Flights"></select>
+
+            <input type="number" name="amount" id="purchase-insurance-amount" placeholder="1 ether" value="1">
+
+            <button class="btn" data-action="0">Buy Insurance</button>
+        </section>
+
+        <section>
+            <h2>Your Insured Flights</h2>
+
+            <ul id="insured-flights">
+            </ul>
+        </section>
+
+
+        <section>
+            <h2>Your Balance</h2>
+
+            <div id="passenger-balance"></div>
+
+            <br>
+
+            <button class="btn" data-action="3">Request Payout</button>
+        </section>
+    </main>
+</body>
+</html>
