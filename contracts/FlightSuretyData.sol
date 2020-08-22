@@ -11,6 +11,7 @@ contract FlightSuretyData {
 
     address private contractOwner;                                      // Account used to deploy contract
     bool private operational = true;                                    // Blocks all state changes throughout the contract if false
+    mapping(address => uint256) private authorizedCaller;
 
     /********************************************************************************************/
     /*                                       EVENT DEFINITIONS                                  */
@@ -55,10 +56,13 @@ contract FlightSuretyData {
         require(msg.sender == contractOwner, "Caller is not contract owner");
         _;
     }
-
     /********************************************************************************************/
     /*                                       UTILITY FUNCTIONS                                  */
     /********************************************************************************************/
+
+    // events
+    event AuthorizedContract(address authContract);
+
 
     /**
     * @dev Get operating status of contract
@@ -73,6 +77,14 @@ contract FlightSuretyData {
         return operational;
     }
 
+ // ------------------- Get and Set function for totalpaidairlines -------------------------
+
+    function setTotalPaidAirlines(address airlineAddress) requireIsOperational private {
+        totalPaidAirlines.push(airlineAddress);
+    }
+    function getTotalPaidAirlines() external requireIsOperational returns(uint){
+        return totalPaidAirlines.length;
+    }
 
     /**
     * @dev Sets contract operations on/off
@@ -89,9 +101,39 @@ contract FlightSuretyData {
         operational = mode;
     }
 
+     function authorizeCaller
+                            (
+                                address contractAddress
+                            )
+                            external
+                            requireContractOwner
+    {
+        authorizedCaller[contractAddress] = 1;
+        emit AuthorizedContract(contractAddress);
+    }
+
     /********************************************************************************************/
     /*                                     SMART CONTRACT FUNCTIONS                             */
     /********************************************************************************************/
+
+
+    /********************************************************************************************/
+    /*                                     AIRLINE                                              */
+    /********************************************************************************************/
+
+    struct Airline {
+        address airlineAddress;
+        string airlineName;
+        bool isRegistered;
+        bool isApproved;
+        bool isPaid;
+    }
+
+
+    // airline mappings
+    mapping(address => Airline) airlines;
+    mapping(address => uint) private voteCount;
+    address[] totalPaidAirlines = new address[](0);
 
    /**
     * @dev Add an airline to the registration queue
@@ -100,10 +142,75 @@ contract FlightSuretyData {
     */   
     function registerAirline
                             (   
+                                address airlineAddress,
+                                string airlineName
+                            )
+                            requireIsOperational
+                            external
+    {
+        airlines[airlineAddress] = Airline({
+            airlineAddress: airlineAddress, 
+            airlineName: airlineName,
+            isRegistered: true,
+            isApproved: false,
+            isPaid: false
+        });
+        setTotalPaidAirlines(airlineAddress);
+    }
+
+
+
+    function isAirlineRegistered
+                            (
+                                address airlineAddress
                             )
                             external
-                            pure
+                            requireIsOperational
+                            returns(bool)
     {
+        require(airlineAddress != address(0), "'account' must be a valid address.");
+        return airlines[airlineAddress].isRegistered;
+    }
+
+    function isAirlineApproved
+                            (
+                                address airlineAddress
+                            )
+                            external
+                            requireIsOperational
+                            returns(bool)
+    {
+        require(airlineAddress != address(0), "'account' must be a valid address.");
+        return airlines[airlineAddress].isApproved;
+    }
+
+
+    function isAirlinePaid
+                            (
+                                address airlineAddress
+                            )
+                            external
+                            requireIsOperational
+                            returns(bool)
+    {
+        require(airlineAddress != address(0), "'account' must be a valid address.");
+        return airlines[airlineAddress].isPaid;
+    }
+
+    function getVoteCount(address airlineAddress) external requireIsOperational returns(uint){
+        return voteCount[airlineAddress];
+    }
+
+    function resetVoteCounter(address account) external requireIsOperational{
+        delete voteCount[account];
+    }
+
+    function setAirlineToApproved(address airlineAddress) external requireIsOperational returns(bool){
+        return airlines[airlineAddress].isApproved = true;
+    }
+
+      function setAirlineToPaid(address airlineAddress) external requireIsOperational returns(bool){
+        return airlines[airlineAddress].isPaid = true;
     }
 
 

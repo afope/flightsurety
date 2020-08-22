@@ -25,6 +25,8 @@ contract FlightSuretyApp {
     uint8 private constant STATUS_CODE_LATE_OTHER = 50;
 
     address private contractOwner;          // Account used to deploy contract
+    FlightSuretyData flightSuretyData;      // Instance of FlightSuretyData
+    address flightSuretyDataContractAddress;
 
     struct Flight {
         bool isRegistered;
@@ -63,6 +65,12 @@ contract FlightSuretyApp {
         _;
     }
 
+    modifier OnlyPaidAirlines() {
+        require(flightSuretyData.isAirlinePaid(msg.sender), "Only paid airlines allowed");
+        _;
+    }
+
+
     /********************************************************************************************/
     /*                                       CONSTRUCTOR                                        */
     /********************************************************************************************/
@@ -73,10 +81,14 @@ contract FlightSuretyApp {
     */
     constructor
                                 (
+                                    address dataContract
                                 ) 
                                 public 
     {
         contractOwner = msg.sender;
+        flightSuretyData = FlightSuretyData(dataContract);
+        flightSuretyData.registerAirline(contractOwner, "FirstAirline");
+        emit AirlineRegistered(contractOwner);
     }
 
     /********************************************************************************************/
@@ -95,21 +107,83 @@ contract FlightSuretyApp {
     /*                                     SMART CONTRACT FUNCTIONS                             */
     /********************************************************************************************/
 
+     /********************************************************************************************/
+    /*                                     AIRLINE                             */
+    /********************************************************************************************/
+
+    /********************************************************************************************/
+    /*                                       EVENT DEFINITIONS                                  */
+    /********************************************************************************************/
+
+    event AirlineRegistered(address airlineAddress);
+    event AirlineApproved(address airlineAddress);
+    event AirlinePaid(address airlineAddress);
   
    /**
     * @dev Add an airline to the registration queue
     *
     */   
+
+    // variables     
+    uint constant LEAST_NUMBER_VOTES = 4; // Number of required keys for tx
+    bool private vote_status = false;
+
     function registerAirline
                             (   
+                                address airlineAddress,
+                                string airlineName
                             )
                             external
-                            pure
-                            returns(bool success, uint256 votes)
     {
-        return (success, 0);
+        require(airlineAddress != address(0), "'account' must be a valid address.");
+        require(!flightSuretyData.isAirlineRegistered(airlineAddress), "Airline is already registered");
+        flightSuretyData.registerAirline(airlineAddress, airlineName);
+        emit AirlineRegistered(airlineAddress);
     }
 
+    function approveAirlineRegistration(address airlineAddress, string airlineName) 
+    external 
+    OnlyPaidAirlines
+    returns(bool success, uint256 votes)
+        {
+        uint totalPaidAirlines = flightSuretyData.getTotalPaidAirlines();
+
+        if (totalPaidAirlines < LEAST_NUMBER_VOTES){
+        flightSuretyData.registerAirline(airlineAddress, airlineName);
+        emit AirlineRegistered(airlineAddress);
+        flightSuretyData.setAirlineToApproved(airlineAddress);
+        emit AirlineApproved(airlineAddress);
+
+        return (true, 0); 
+        } else {
+            if(vote_status) {
+                uint256 votes_count = flightSuretyData.getVoteCount(airlineAddress);
+                uint256 approvalsRequired = totalPaidAirlines / 2;
+                if (votes_count >= approvalsRequired) {
+                    flightSuretyData.setAirlineToApproved(airlineAddress);
+                    emit AirlineApproved(airlineAddress);
+
+                    flightSuretyData.registerAirline(airlineAddress, airlineName);
+                    emit AirlineRegistered(airlineAddress);
+
+                    return(true, votes);
+                }
+                else {
+                    return(false, votes);
+                }
+            }
+        }
+    }
+
+    function payAirlineDues() external payable
+    {
+        require(msg.value == 10 ether, "Payment of 10 ether is required");
+
+        flightSuretyDataContractAddress.transfer(msg.value);
+        flightSuretyData.setAirlineToPaid(msg.sender);
+
+        emit AirlinePaid(msg.sender);
+    }
 
    /**
     * @dev Register a future flight for insuring.
@@ -335,3 +409,14 @@ contract FlightSuretyApp {
 // endregion
 
 }   
+
+contract FlightSuretyData {
+    function registerAirline(address airlineAddress, string airlineName) external{} 
+    function isAirlineRegistered(address airlineAddress)external returns(bool){}
+    function getTotalPaidAirlines() external returns(uint);
+    function getVoteCount(address airlineAddress) external returns(uint);
+    function setAirlineToApproved(address airlineAddress) external returns(bool) {}
+    function setAirlineToPaid(address airlineAddress) external returns(bool){}
+    function isAirlineApproved(address airlineAddress) external returns(bool){}
+    function isAirlinePaid(address airlineAddress) external returns(bool){}
+}
