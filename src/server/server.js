@@ -69,22 +69,22 @@ let getAccounts = async () => {
 ;(async () => {
   const accounts = await getAccounts()
   console.log('accounts', accounts)
-})()
 
   let getRegistrationFee = async () => {
     let result = await flightSuretyApp.methods.REGISTRATION_FEE().call();
-    return result.toString("binary");
+    return result;
   }
 
   (async () => {
     try {
-      const fee = await getRegistrationFee().toString("binary");
+      const fee = await getRegistrationFee();
       console.log('fee', fee);
     } catch(e) {
       console.log('error', e);
     }
   })() 
 
+})()
 
 
 
