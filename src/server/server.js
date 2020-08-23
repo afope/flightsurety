@@ -34,59 +34,58 @@ let STATUS_CODES = [{
   "code": 50
 }];
 
-// // async function initOracles() {
-// // return new Promise((resolve, reject) => {
-// //   web3.eth.getAccounts().then(accounts => {
-// //     //accounts will be an array with all accounts that comes from your Ethereum provider
-// //     let fee = flightSuretyApp.methods.REGISTRATION_FEE().call();
-// //     let oracles = [];
-// //     accounts.forEach(account => {
-// //       {
-// //         let registeredOracles = flightSuretyApp.methods.registerOracle().send({
-// //           "from": account,
-// //           "value": fee,
-// //           "gas": 4712388,
-// //           "gasPrice": 100000000000
-// //     }).then(result => {
-// //       resolve(result);
-// //       console.log(`Oracle registered: ${result} at ${account}`);
-// //       oracles.push(result);
-// //     }).catch(error => {
-// //       reject(error);
-// //     })
-// //   } 
-// //    });
-// //  });
-// // })
- 
-// // }
-
 let getAccounts = async () => {
     const currentAccounts = await web3.eth.getAccounts();
     return currentAccounts;
 }
 
-;(async () => {
+let getRegistrationFee = async () => {
+  let result = await flightSuretyApp.methods.REGISTRATION_FEE().call();
+  return result;
+}
+
+let getIndexes = async (accounts) => {
+  let returnedIndexes;
+  accounts.slice(10,40).forEach(account => {
+    let result = flightSuretyApp.methods.getMyIndexes().call({ from: account });;
+    returnedIndexes = result;
+  })
+    return returnedIndexes;
+}
+
+let registerOracles = async (accounts, fee, indexes) => { 
+  let registeredOracle;
+  accounts.slice(10,40).forEach(account => {
+    let result = flightSuretyApp.methods.registerOracle().send({
+              "from": account,
+              "value": fee,
+              "gas": 4712388,
+              "gasPrice": 100000000000
+        });
+    console.log(`Oracle registered, ${indexes} at ${account}`);
+    registeredOracle = result;
+    const statusCode = STATUS_CODES[Math.floor(Math.random() * STATUS_CODES.length)];
+    oracles.push({ account, indexes, statusCode });
+})
+  return registeredOracle
+}
+
+(async () => {
   const accounts = await getAccounts()
   console.log('accounts', accounts)
 
-  let getRegistrationFee = async () => {
-    let result = await flightSuretyApp.methods.REGISTRATION_FEE().call();
-    return result;
-  }
+  const fee = await getRegistrationFee();
+  console.log('fee', fee);
 
-  (async () => {
-    try {
-      const fee = await getRegistrationFee();
-      console.log('fee', fee);
-    } catch(e) {
-      console.log('error', e);
-    }
-  })() 
+  const indexes = await getIndexes(accounts);
+  // const indexes = [0,1,3];
+  console.log('indexes', indexes)
+
+  const NUMBER_OF_ORACLES = 40;
+  const oracle = await registerOracles(accounts, fee, indexes);
+  console.log('oracles', oracles)
 
 })()
-
-
 
 
 flightSuretyApp.events.OracleRequest({
