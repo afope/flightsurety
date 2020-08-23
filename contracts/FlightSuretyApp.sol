@@ -382,6 +382,14 @@ contract FlightSuretyApp {
                                     });
     }
 
+    function getRegistrationFee 
+    () 
+    external
+    returns(uint256)
+    {
+        return REGISTRATION_FEE;
+    }
+
     function getMyIndexes
                             (
                             )
