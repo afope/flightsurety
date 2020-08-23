@@ -72,24 +72,18 @@ let getAccounts = async () => {
 })()
 
   let getRegistrationFee = async () => {
-    return new Promise((resolve, reject) => {
-      flightSuretyApp.methods.REGISTRATION_FEE().call((error, result) => {
-        if(error != null) {
-          return reject(error);
-        }
-        return resolve(result.toString("binary"));
-      });
-    });
+    let result = await flightSuretyApp.methods.REGISTRATION_FEE().call();
+    return result.toString("binary");
   }
 
-  ;(async () => {
-      const fee = await getRegistrationFee().then(result => {
-      console.log('fee', result)
-    }).catch(err => {
-            return err;
-          });
-      console.log("fee", fee)
-  })()
+  (async () => {
+    try {
+      const fee = await getRegistrationFee().toString("binary");
+      console.log('fee', fee);
+    } catch(e) {
+      console.log('error', e);
+    }
+  })() 
 
 
 
