@@ -73,6 +73,11 @@ contract('Flight Surety Tests', async (accounts) => {
 
   });
 
+
+    /****************************************************************************************/
+    /* Airline                                                                               */
+    /****************************************************************************************/
+
   it('(airline) can register airline', async () => {
     
     // ARRANGE
@@ -152,6 +157,54 @@ contract('Flight Surety Tests', async (accounts) => {
     assert.equal(result_airline_two, false, "airline has not paid dues");
 
   })
- 
+
+     /****************************************************************************************/
+    /* Passenger                                                                             */
+    /****************************************************************************************/
+
+    it('passenger can purchase insurance for up to 1 ether', async () => {
+    
+        // ARRANGE
+        let passenger_one = accounts[2];
+        let airline_address = accounts[3];
+        let correctFundPrice = web3.utils.toWei("1", "ether");
+    
+        try{
+            await config.flightSuretyApp.purchaseFlightInsurance(airline_address, "Flight 001", 001, {from: passenger_one, value: correctFundPrice});
+        }catch(e){
+            console.log("error", e);
+        }
+        
+        let isFlightInsurancePaidFor = await config.flightSuretyApp.isFlightInsurancePaidFor.call(airline_address, "Flight 001", 001);
+
+        assert.equal(isFlightInsurancePaidFor, true, "Passenger has purchased flight insurance");    
+      })
+
+      it('repays passenger 1.5 amount of insurance purchased', async () => {
+    
+        // ARRANGE
+        let airline_address = accounts[3];
+        let insuranceAmount = web3.utils.toWei("1", "ether");
+    
+        // ASSERT
+        let payBackAmount = await config.flightSuretyApp.repayPassenger.call(airline_address, "Flight 001", 001, insuranceAmount);
+        let result = insuranceAmount * 1.5;
+        assert.equal(payBackAmount, result, "Passenger has purchased flight insurance");    
+      })
+
+
+      it('passenger can withdraw balance', async () => {
+    
+        // ARRANGE
+        let airline_address = accounts[3];
+        let passenger_address = accounts[4];
+        let payBackAmount = web3.utils.toWei("1", "ether");
+    
+        // ASSERT
+        let withDrawBalance  = await config.flightSuretyApp.withdrawBalance.call(airline_address, "Flight 001", 001, passenger_address, payBackAmount, {from: passenger_address, value: payBackAmount});
+
+        let result = 0;
+        assert.equal(withDrawBalance, result, "Passenger can't withdrawn balance");    
+      })
 
 });

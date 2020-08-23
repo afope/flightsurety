@@ -16,25 +16,9 @@ contract FlightSuretyApp {
     /*                                       DATA VARIABLES                                     */
     /********************************************************************************************/
 
-    // Flight status codees
-    uint8 private constant STATUS_CODE_UNKNOWN = 0;
-    uint8 private constant STATUS_CODE_ON_TIME = 10;
-    uint8 private constant STATUS_CODE_LATE_AIRLINE = 20;
-    uint8 private constant STATUS_CODE_LATE_WEATHER = 30;
-    uint8 private constant STATUS_CODE_LATE_TECHNICAL = 40;
-    uint8 private constant STATUS_CODE_LATE_OTHER = 50;
-
     address private contractOwner;          // Account used to deploy contract
     FlightSuretyData flightSuretyData;      // Instance of FlightSuretyData
     address flightSuretyDataContractAddress;
-
-    struct Flight {
-        bool isRegistered;
-        uint8 statusCode;
-        uint256 updatedTimestamp;        
-        address airline;
-    }
-    mapping(bytes32 => Flight) private flights;
 
  
     /********************************************************************************************/
@@ -185,10 +169,109 @@ contract FlightSuretyApp {
         emit AirlinePaid(msg.sender);
     }
 
-   /**
-    * @dev Register a future flight for insuring.
-    *
-    */  
+   /********************************************************************************************/
+    /*                                     PASSENGER FUNCTIONS                                  */
+    /********************************************************************************************/
+
+    // Flight status codees
+    uint8 private constant STATUS_CODE_UNKNOWN = 0;
+    uint8 private constant STATUS_CODE_ON_TIME = 10;
+    uint8 private constant STATUS_CODE_LATE_AIRLINE = 20;
+    uint8 private constant STATUS_CODE_LATE_WEATHER = 30;
+    uint8 private constant STATUS_CODE_LATE_TECHNICAL = 40;
+    uint8 private constant STATUS_CODE_LATE_OTHER = 50;
+
+    // struct
+    struct Flight {
+        bytes32 flightKey;
+        bool isRegistered;
+        bool isPaid;
+        uint8 statusCode;
+        uint256 updatedTimestamp;        
+        address airlineAddress;
+        address passengerAddress;
+        uint insuranceAmount;
+        uint payBackAmount;
+    }
+
+      // mapping
+    mapping(bytes32 => Flight) private flights;
+
+    // events
+    event FlightInsurancePurchased(bytes32 flightKey, address airlineAddress, uint256 insuranceAmount);
+    event PassengerInsuranceAmountCredited(bytes32 flightKey, address airlineAddress, uint256 payBackAmount);
+    event InsuranceWithdrawn(bytes32 flightKey, address passengerAddress, uint256 payBackAmount);
+
+    function purchaseFlightInsurance(address airlineAddress, string flightName, uint256 timestamp) public payable {
+        bytes32 flightKey = getFlightKey(airlineAddress, flightName, timestamp);
+        require(msg.value <= 1 ether, "Payment of up to 1 ether is required");
+        require(msg.value != 0, "Payment must be more than zero");
+
+        flights[flightKey].insuranceAmount = msg.value;
+        flights[flightKey].isPaid = true;
+        flightSuretyDataContractAddress.transfer(msg.value);
+
+
+        emit FlightInsurancePurchased(flightKey, flights[flightKey].airlineAddress, flights[flightKey].insuranceAmount);
+    }
+
+    function isFlightInsurancePaidFor(address airlineAddress, string flightName, uint256 timestamp) 
+        external 
+        requireIsOperational
+         returns(bool) {
+            bytes32 flightKey = getFlightKey(airlineAddress, flightName, timestamp);
+            return flights[flightKey].isPaid;
+    }
+
+    function repayPassenger
+        (
+            address airlineAddress, 
+            string flightName, 
+            uint256 timestamp,
+            uint insuranceAmount
+        ) 
+            public 
+            requireIsOperational 
+            returns(uint256)
+        {
+            bytes32 flightKey = getFlightKey(airlineAddress, flightName, timestamp);
+            require(flights[flightKey].statusCode != STATUS_CODE_ON_TIME, "flight is not delayed due to airline fault");
+            require(flights[flightKey].insuranceAmount != 0, "Passenger is not insured");
+
+            insuranceAmount = flights[flightKey].insuranceAmount;
+            uint payBackAmount = insuranceAmount.mul(3).div(2);
+            flights[flightKey].payBackAmount = payBackAmount;
+
+            emit PassengerInsuranceAmountCredited(flightKey, airlineAddress, payBackAmount);
+            return payBackAmount;
+    }
+
+        function withdrawBalance
+            (
+                address airlineAddress, 
+                string flightName, 
+                uint256 timestamp,
+                address passengerAddress,
+                uint payBackAmount
+            ) 
+            external 
+            payable
+            requireIsOperational
+            returns(uint)
+            {
+                bytes32 flightKey = getFlightKey(airlineAddress, flightName, timestamp);
+                require(payBackAmount > 0, "Passenger doesn't have enough to withdraw that amount");
+
+                flights[flightKey].payBackAmount = payBackAmount;
+                flights[flightKey].payBackAmount = 0;
+                passengerAddress.transfer(flights[flightKey].payBackAmount);
+                emit InsuranceWithdrawn(flightKey, passengerAddress, flights[flightKey].payBackAmount);
+                return flights[flightKey].payBackAmount;
+            }
+
+
+  
+
     function registerFlight
                                 (
                                 )
@@ -351,15 +434,15 @@ contract FlightSuretyApp {
 
     function getFlightKey
                         (
-                            address airline,
-                            string flight,
+                            address airlineAddress,
+                            string flightName,
                             uint256 timestamp
                         )
                         pure
                         internal
                         returns(bytes32) 
     {
-        return keccak256(abi.encodePacked(airline, flight, timestamp));
+        return keccak256(abi.encodePacked(airlineAddress, flightName, timestamp));
     }
 
     // Returns array of three non-duplicating integers from 0-9
