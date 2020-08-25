@@ -201,7 +201,7 @@ contract('Flight Surety Tests', async (accounts) => {
         let payBackAmount = web3.utils.toWei("1", "ether");
     
         // ASSERT
-        let withDrawBalance  = await config.flightSuretyApp.withdrawBalance.call(airline_address, "Flight 001", 001, passenger_address, payBackAmount, {from: passenger_address, value: payBackAmount});
+        let withDrawBalance  = await config.flightSuretyApp.withdrawBalance.call(airline_address, "Flight 001", 001, passenger_address, {from: passenger_address, value: payBackAmount});
 
         let result = 0;
         assert.equal(withDrawBalance, result, "Passenger can't withdrawn balance");    

@@ -2,6 +2,7 @@ body {
     background-image: url('flight.jpg'); /* Source: iStockPhoto */
     background-repeat: no-repeat;
     background-size: cover;
+    font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
 }
 
 .container {
@@ -14,6 +15,8 @@ body {
 
 .top-20 {
     margin-top: 20px;
+    display: flex;
+    flex-direction: column;
 }
 
 h5 {
@@ -37,6 +40,18 @@ label.form {
     font-size: 14px;
     margin-right: 20px;
 }
+
 input {
     margin-right: 30px;
+    width: 30%;
+}
+
+.select-flight {
+    width: 30%;
+    height: 50px;
+}
+
+.btn-primary{
+    margin-top: 10px;
+    width: 30%;
 }

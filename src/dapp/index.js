@@ -15,14 +15,36 @@ import './flightsurety.css';
             console.log(error,result);
             display('Operational Status', 'Check if contract is operational', [ { label: 'Operational Status', error: error, value: result} ]);
         });
+
+        //User-submitted transaction
+        DOM.elid('purchase-insurance').addEventListener('click', () => {
+            console.log('clicked')
+            let flight = DOM.elid('flight-number-insurance').value;
+            let amount = DOM.elid('flight-insurance-amount').value;
+            console.log('amount', amount);
+            // Write transaction
+            contract.purchaseFlightInsurance(flight, amount, (error, result) => {
+            console.log('result'. result);
+            display('Insurance', 'Fetching Insurance', [ { label: 'Purchase flight insurance', error: error, value: 'Insurance of ' + amount +  ' ether purchased!'} ]);
+            });
+        })
     
 
         // User-submitted transaction
         DOM.elid('submit-oracle').addEventListener('click', () => {
-            let flight = DOM.elid('flight-number').value;
+            let flight = DOM.elid('flight-number-insurance').value;
             // Write transaction
             contract.fetchFlightStatus(flight, (error, result) => {
-                display('Oracles', 'Trigger oracles', [ { label: 'Fetch Flight Status', error: error, value: result.flight + ' ' + result.timestamp} ]);
+                display('Oracles', 'Trigger oracles', [ { label: 'Submit to Oracle', error: error, value: result.flight + ' submitted to oracle at:' + result.timestamp} ]);
+            });
+        })
+
+        DOM.elid('claim-insurance').addEventListener('click', () => {
+            let flight = DOM.elid('flight-number-insurance').value;
+            // Write transaction
+            contract.withdrawBalance(flight, (error, result) => {
+                console.log('result', result)
+                display('Passenger Balance', 'Withdraw balance', [ { label: 'Claim your insurance', error: error, value: 'Flight insurance claimed at' + result.timestamp + '!'} ]);
             });
         })
     

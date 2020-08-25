@@ -23,9 +23,40 @@
 
         <div id="display-wrapper" class="top-20">
         </div>
+
         <div class="row top-20">
-            <label class="form">Flight</label> <input type="text" id="flight-number"> <btn class="btn btn-primary" id="submit-oracle">Submit to Oracles</btn>
+            <label class="form" for="flights">Purchase Insurance for 1 ether or more</label> 
+            <select name="flight-insurance" id="flight-number-insurance" class="select-flight">
+                <option value="LG-AMS 001">LG-AMS 001</option>
+                <option value="DB-AMS 002">DB-AMS 002</option>
+                <option value="ABJ-KD 003">ABJ-KD 003</option>
+                <option value="TKY-LDN 004">TKY-LDN 004</option>
+                <option value="AB-DB 005">AB-DB 005</option>
+                <option value="IND-SF 006">IND-SF 006</option>
+                <option value="GH-SG 007">GH-SG 007</option>
+                <option value="MZ-EN 008">MZ-EN 008</option>
+                <option value="BL-LG 009">BL-LG 009</option>
+                <option value="EV-NW 010">EV-NW 010</option>
+            </select>
+            
+            <div>
+                <input type="number" name="amount" id="flight-insurance-amount" placeholder="1 ether" value="1">ether
+            </div>
+            <btn class="btn btn-primary" id="purchase-insurance">Purchase Insurance</btn>
+    </div>
+
+        <div class="row top-20">
+                <label class="form" for="flights">Get Flight Status</label> 
+                <btn class="btn btn-primary" id="submit-oracle">Submit to Oracles</btn>
         </div>
+
+        <div id="display-wrapper" class="top-20">
+        </div>
+
+        <div class="row top-20">
+            <label class="form" for="flights">Claim insurance</label> 
+            <btn class="btn btn-primary" id="claim-insurance">Withdraw funds</btn>
+    </div>
     </main>
 
 </body>

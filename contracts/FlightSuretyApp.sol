@@ -251,8 +251,7 @@ contract FlightSuretyApp {
                 address airlineAddress, 
                 string flightName, 
                 uint256 timestamp,
-                address passengerAddress,
-                uint payBackAmount
+                address passengerAddress
             ) 
             external 
             payable
@@ -260,9 +259,8 @@ contract FlightSuretyApp {
             returns(uint)
             {
                 bytes32 flightKey = getFlightKey(airlineAddress, flightName, timestamp);
-                require(payBackAmount > 0, "Passenger doesn't have enough to withdraw that amount");
+                require(flights[flightKey].payBackAmount <= 0, "Passenger doesn't have enough to withdraw that amount");
 
-                flights[flightKey].payBackAmount = payBackAmount;
                 flights[flightKey].payBackAmount = 0;
                 passengerAddress.transfer(flights[flightKey].payBackAmount);
                 emit InsuranceWithdrawn(flightKey, passengerAddress, flights[flightKey].payBackAmount);
@@ -355,6 +353,7 @@ contract FlightSuretyApp {
 
     // Event fired each time an oracle submits a response
     event FlightStatusInfo(address airline, string flight, uint256 timestamp, uint8 status);
+    event OracleRegistered(address oracleAddress, uint fee);
 
     event OracleReport(address airline, string flight, uint256 timestamp, uint8 status);
 
@@ -380,6 +379,9 @@ contract FlightSuretyApp {
                                         isRegistered: true,
                                         indexes: indexes
                                     });
+
+         emit OracleRegistered(msg.sender, msg.value);
+        
     }
 
     function getRegistrationFee 
